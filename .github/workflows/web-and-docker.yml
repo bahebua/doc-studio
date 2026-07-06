@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write  # needed to attach single-file bundle to GitHub Releases on tag push
   packages: write
 
 jobs:
@@ -59,6 +59,55 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 30
+
+  single-file:
+    name: Build standalone single-file HTML
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ needs.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build single-file bundle (dist-single/index.html)
+        run: npm run build:single
+
+      - name: Rename artefact to a shareable filename
+        run: |
+          mkdir -p out
+          cp dist-single/index.html "out/doc-studio-${{ needs.build.outputs.version }}.html"
+          # also ship a plain 'doc-studio.html' for latest-download links
+          cp dist-single/index.html "out/doc-studio.html"
+          ls -lh out/
+
+      - name: Upload single-file artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-studio-single-file-${{ needs.build.outputs.version }}
+          path: out/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Attach single-file bundle to GitHub Release (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/doc-studio-${{ needs.build.outputs.version }}.html
+            out/doc-studio.html
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
     name: Build & push Docker image

@@ -14,18 +14,45 @@
  *
  * Usage: `npm run build:single` — output at `dist-single/index.html`.
  */
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { fileURLToPath, URL } from 'node:url';
 
+// Same latex.js `.keep` stub as vite.config.ts — required both here and in
+// optimizeDeps below because Vite's dep scanner (esbuild) and the Rollup
+// pass each hit those marker files. Full explanation in vite.config.ts.
+const stubKeepFilesPlugin = (): Plugin => ({
+  name: 'stub-keep-files',
+  enforce: 'pre',
+  resolveId(source) {
+    if (source.endsWith('.keep')) return `\0stub-keep:${source}`;
+  },
+  load(id) {
+    if (id.startsWith('\0stub-keep:')) return 'export default {};';
+  },
+});
+
 export default defineConfig({
   resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    alias: [
+      { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+      // latex.js ships CSS under `dist/css/` but its package.json `exports`
+      // field only exposes the JS entry — route the imports directly at the
+      // filesystem so Vite can pick them up like any other stylesheet.
+      {
+        find: /^latex\.js\/dist\/css\/(.+)$/,
+        replacement: fileURLToPath(new URL('./node_modules/latex.js/dist/css/$1', import.meta.url)),
+      },
+    ],
+  },
+  plugins: [react(), stubKeepFilesPlugin(), viteSingleFile()],
+  optimizeDeps: {
+    entries: ['index.html'],
+    esbuildOptions: {
+      loader: { '.keep': 'empty' },
     },
   },
-  plugins: [react(), viteSingleFile()],
   build: {
     target: 'es2020',
     sourcemap: false,
