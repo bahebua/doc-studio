@@ -1,0 +1,97 @@
+# Doc Studio — CI: Android APK/AAB via Capacitor 6.
+#
+# Runs `npx cap sync android` against the freshly-built web bundle, then
+# calls Gradle to produce a debug APK. Release AAB requires signing —
+# see the commented-out step below.
+#
+# Prereqs on the runner (provided by the setup actions):
+#   - Node 20
+#   - JDK 17 (Temurin)
+#   - Android SDK (via android-actions/setup-android)
+#
+# For release AABs, add secrets:
+#   ANDROID_KEYSTORE_BASE64    — base64-encoded .jks / .keystore
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+
+name: android
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+
+      - name: Install npm deps
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Bootstrap Android project (first run only)
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          else
+            npx cap sync android
+          fi
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      # Uncomment for signed release AAB:
+      # - name: Decode keystore
+      #   run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+      # - name: Build signed AAB
+      #   working-directory: android
+      #   env:
+      #     KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      #     KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      #     KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      #   run: ./gradlew bundleRelease
+      #     -Pandroid.injected.signing.store.file=$PWD/app/release.keystore
+      #     -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD
+      #     -Pandroid.injected.signing.key.alias=$KEY_ALIAS
+      #     -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-studio-android-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30

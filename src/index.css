@@ -1,0 +1,697 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------------------------------------------------------------------------
+   Base
+-------------------------------------------------------------------------- */
+:root {
+  color-scheme: light dark;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(100, 116, 139, 0.35);
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  @apply bg-surface-soft text-slate-800 dark:bg-night dark:text-slate-200;
+  font-feature-settings: 'cv02', 'cv03', 'cv11';
+}
+
+/* Custom scrollbar */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* --------------------------------------------------------------------------
+   Editor
+-------------------------------------------------------------------------- */
+.md-editor {
+  @apply w-full h-full resize-none outline-none bg-transparent p-6 sm:p-8 font-mono text-[15px] leading-7;
+  tab-size: 2;
+}
+
+.md-editor::placeholder {
+  @apply text-slate-400 dark:text-slate-500;
+}
+
+/* CodeMirror 6 host — fills the editor pane. */
+.cm-host {
+  position: relative;
+}
+.cm-host .cm-editor {
+  height: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 14.5px;
+  line-height: 1.7;
+  background: transparent;
+}
+.cm-host .cm-scroller {
+  padding: 12px 8px 20px;
+}
+.cm-host .cm-gutters {
+  background: transparent;
+  border-right: 1px solid rgba(148, 163, 184, 0.15);
+  color: rgba(100, 116, 139, 0.75);
+}
+.cm-host .cm-activeLineGutter,
+.cm-host .cm-activeLine {
+  background: rgba(148, 163, 184, 0.09);
+}
+/* Search-match highlighting — brand yellow, current match brand orange. */
+.cm-host .cm-searchMatch {
+  background: rgba(250, 204, 21, 0.35);
+  border-radius: 2px;
+  outline: 1px solid rgba(202, 138, 4, 0.35);
+}
+.cm-host .cm-searchMatch-selected {
+  background: rgba(249, 115, 22, 0.6);
+  color: #fff;
+  outline: 1px solid rgba(194, 65, 12, 0.6);
+}
+/* CM's built-in search panel — hide it; we drive search from the sidebar. */
+.cm-host .cm-panels {
+  display: none;
+}
+/* Drop target outline */
+.cm-host.drop-active::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 2px dashed rgba(59, 130, 246, 0.55);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+/* Preview search highlight (CSS Custom Highlight API — Chromium/Safari/FF). */
+::highlight(search-preview) {
+  background-color: rgba(250, 204, 21, 0.5);
+  color: inherit;
+}
+.dark ::highlight(search-preview) {
+  background-color: rgba(202, 138, 4, 0.55);
+  color: inherit;
+}
+/* The single "current" match — brighter, so the user can spot it while
+   iterating with Enter / Shift+Enter. */
+::highlight(search-preview-current) {
+  background-color: rgba(249, 115, 22, 0.75);
+  color: inherit;
+}
+.dark ::highlight(search-preview-current) {
+  background-color: rgba(234, 88, 12, 0.85);
+  color: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   Preview (prose)
+-------------------------------------------------------------------------- */
+.md-preview {
+  @apply prose prose-slate dark:prose-invert max-w-none;
+  @apply prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight;
+  @apply prose-h1:text-3xl sm:prose-h1:text-4xl prose-h1:mb-4 prose-h1:mt-0;
+  @apply prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-3;
+  @apply prose-h3:text-xl sm:prose-h3:text-2xl;
+  @apply prose-p:leading-7;
+  @apply prose-a:text-brand-600 dark:prose-a:text-brand-300 prose-a:no-underline hover:prose-a:underline;
+  @apply prose-code:before:content-none prose-code:after:content-none;
+  @apply prose-code:bg-slate-100 dark:prose-code:bg-slate-800/70 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-[0.9em];
+  @apply prose-pre:bg-slate-900 prose-pre:text-slate-100 dark:prose-pre:bg-black/60;
+  @apply prose-pre:rounded-xl prose-pre:shadow-soft prose-pre:p-4;
+  @apply prose-blockquote:border-l-brand-500 prose-blockquote:not-italic;
+  @apply prose-img:rounded-xl prose-img:shadow-soft prose-img:mx-auto;
+  @apply prose-table:text-sm prose-table:overflow-hidden prose-table:rounded-xl prose-table:border prose-table:border-slate-200 dark:prose-table:border-slate-700;
+  @apply prose-th:bg-slate-100 dark:prose-th:bg-slate-800 prose-th:p-3;
+  @apply prose-td:p-3 prose-td:border-t prose-td:border-slate-100 dark:prose-td:border-slate-800;
+  @apply prose-hr:border-slate-200 dark:prose-hr:border-slate-700;
+}
+
+.md-preview ul.contains-task-list {
+  @apply list-none pl-0;
+}
+.md-preview ul.contains-task-list li {
+  @apply flex items-start gap-2;
+}
+.md-preview input[type='checkbox'] {
+  @apply mt-1.5 accent-brand-500;
+}
+
+/* Syntax highlighting: use a github-dark-esque palette via CSS vars */
+.md-preview pre code.hljs {
+  background: transparent;
+  padding: 0;
+  color: #e2e8f0;
+}
+.hljs-comment,
+.hljs-quote {
+  color: #94a3b8;
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+  color: #f472b6;
+}
+.hljs-string,
+.hljs-title,
+.hljs-name,
+.hljs-type,
+.hljs-attribute,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition,
+.hljs-variable,
+.hljs-template-tag,
+.hljs-template-variable {
+  color: #86efac;
+}
+.hljs-number,
+.hljs-meta {
+  color: #fbbf24;
+}
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #7dd3fc;
+}
+.hljs-deletion {
+  color: #fca5a5;
+}
+
+/* --------------------------------------------------------------------------
+   PDF preview surface — the actual "paper" we hand to html2pdf
+-------------------------------------------------------------------------- */
+.pdf-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm 18mm;
+  margin: 0 auto;
+  background: #ffffff;
+  color: #0f172a;
+  color-scheme: light;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.12);
+  border-radius: 4px;
+}
+
+/* Force the paper to render in "light" mode even when the app is in dark
+   mode. Two layers: (a) reset the Tailwind Typography plugin's CSS variables
+   so `dark:prose-invert` no longer produces white-on-white, and (b) override
+   the custom `@apply` colors that hard-code dark palette values. */
+.pdf-page .md-preview {
+  --tw-prose-body: #334155;
+  --tw-prose-headings: #0f172a;
+  --tw-prose-lead: #475569;
+  --tw-prose-links: #2a48d6;
+  --tw-prose-bold: #0f172a;
+  --tw-prose-counters: #64748b;
+  --tw-prose-bullets: #cbd5e1;
+  --tw-prose-hr: #e2e8f0;
+  --tw-prose-quotes: #0f172a;
+  --tw-prose-quote-borders: #3b60f5;
+  --tw-prose-captions: #64748b;
+  --tw-prose-code: #0f172a;
+  --tw-prose-pre-code: #e2e8f0;
+  --tw-prose-pre-bg: #0f172a;
+  --tw-prose-th-borders: #cbd5e1;
+  --tw-prose-td-borders: #e2e8f0;
+  color: #0f172a;
+}
+
+.pdf-page .md-preview h1,
+.pdf-page .md-preview h2,
+.pdf-page .md-preview h3,
+.pdf-page .md-preview h4,
+.pdf-page .md-preview h5,
+.pdf-page .md-preview h6,
+.pdf-page .md-preview strong {
+  color: #0f172a !important;
+}
+.pdf-page .md-preview a {
+  color: #2a48d6 !important;
+}
+.pdf-page .md-preview code {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+.pdf-page .md-preview pre {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+.pdf-page .md-preview pre code {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+}
+.pdf-page .md-preview table,
+.pdf-page .md-preview td,
+.pdf-page .md-preview th {
+  border-color: #e2e8f0 !important;
+}
+.pdf-page .md-preview th {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+.pdf-page .md-preview hr {
+  border-color: #e2e8f0 !important;
+}
+.pdf-page .md-preview blockquote {
+  color: #334155 !important;
+  border-left-color: #3b60f5 !important;
+  background: #f8fafc;
+}
+
+/* Page break helpers used by html2pdf */
+.page-break {
+  page-break-after: always;
+}
+
+/* --------------------------------------------------------------------------
+   Print (browser Print / Save as PDF)
+
+   Rather than trying to flatten the app's nested flex/scroll layout in place
+   (fragile — every wrapper the app adds is a new potential pagination bug),
+   the print handler in ExportDialog builds a dedicated `.print-only-root`
+   div at print time and populates it with a clean clone of the preview.
+   The print CSS below simply hides everything except that root.
+-------------------------------------------------------------------------- */
+.print-only-root {
+  /* Hidden on-screen; only becomes visible under @media print. */
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  .print-only-root .print-running-header,
+  .print-only-root .print-running-footer {
+    /* Legacy hooks (older export path). Kept as no-op fallbacks in case a
+       stale print-only-root lingers; @page margin-boxes now supply the
+       running header/footer/page-number. */
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000 !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide every top-level element under <body> — except our print-only root. */
+  body > *:not(.print-only-root) {
+    display: none !important;
+  }
+
+  .print-only-root {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    color: #000 !important;
+    background: #ffffff !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif !important;
+    line-height: 1.6;
+  }
+
+  /* Reset the cloned .md-preview's dark-mode inheritance and any width caps. */
+  .print-only-root .md-preview {
+    color: #000 !important;
+    background: transparent !important;
+    max-width: 100% !important;
+  }
+
+  .print-only-root .md-preview a {
+    color: #1d4ed8 !important;
+  }
+
+  .print-only-root .md-preview code {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+
+  .print-only-root .md-preview pre {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #e2e8f0 !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    page-break-inside: avoid;
+  }
+
+  .print-only-root .md-preview pre code {
+    background: transparent !important;
+    color: inherit !important;
+  }
+
+  .print-only-root .md-preview blockquote {
+    color: #334155 !important;
+    background: #f8fafc !important;
+    border-left: 4px solid #3b60f5 !important;
+    page-break-inside: avoid;
+  }
+
+  .print-only-root .md-preview table,
+  .print-only-root .md-preview img {
+    page-break-inside: avoid;
+  }
+
+  .print-only-root .md-preview h1,
+  .print-only-root .md-preview h2,
+  .print-only-root .md-preview h3,
+  .print-only-root .md-preview h4,
+  .print-only-root .md-preview h5,
+  .print-only-root .md-preview h6 {
+    color: #0f172a !important;
+    page-break-after: avoid;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Utilities
+-------------------------------------------------------------------------- */
+.glass {
+  @apply bg-white/70 dark:bg-night-soft/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-700/60;
+}
+
+.drop-active {
+  @apply outline-dashed outline-2 outline-brand-500 outline-offset-[-6px] bg-brand-50/60 dark:bg-brand-900/20;
+}
+
+.mark-hit {
+  background: rgba(250, 204, 21, 0.4);
+  border-radius: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   LaTeX mode — applied to `.md-preview` when a `\documentclass` /
+   `\begin{document}` document is detected. Aims to produce output that
+   *looks like* an Overleaf-compiled PDF while staying in HTML/CSS.
+   Reference: Overleaf renders with Computer Modern Roman, dense
+   spacing, thin section rules, justified body, blue hyperlinks.
+
+   Fonts come from latex.js itself. Its `base.css` (imported inside the
+   lazy `LatexPreview` chunk) pulls in the full Computer Modern family
+   from `latex.js/dist/fonts/cmu.css`, so we don't need any @font-face
+   rules here. If latex.js's CSS hasn't loaded yet, the stack falls
+   back to whatever CM variant the OS ships (rare) and then Georgia.
+-------------------------------------------------------------------------- */
+
+/* LaTeX-mode scope — everything below is authored plain (not `@apply`)
+   so it wins over the Tailwind Typography defaults on `.md-preview`
+   without needing `!important` on every rule. */
+.md-preview.latex-mode {
+  font-family: 'Latin Modern Roman', 'Computer Modern Serif', 'CMU Serif',
+    Georgia, 'Times New Roman', serif;
+  /* Tunable knobs — all `--doc-*` variables are set by the LatexStylePanel
+     (see src/lib/latex/latexStyleConfig.ts). The fallbacks reproduce the
+     Overleaf-adjacent defaults so the stylesheet remains self-contained
+     when the panel isn't mounted (e.g. the PDF export mirror). */
+  font-size: var(--doc-font-size, 13.5px); /* ≈ 10.5pt at 96 dpi */
+  line-height: var(--doc-line-height, 1.22);
+  color: #000;
+  text-align: justify;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-feature-settings: 'liga', 'kern';
+  font-variant-ligatures: common-ligatures;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  max-width: 210mm;
+  margin: 1rem auto;
+  padding: var(--doc-page-padding, 0.4in);
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+  border-radius: 4px;
+}
+
+/* Section headings — \titleformat{\section}{\large\bfseries\uppercase}
+   with a \titlerule underneath. Overleaf's default rendering of the
+   résumé template is very compact — mirror that spacing so the whole
+   document fits on one page like the source PDF does. */
+.md-preview.latex-mode h1,
+.md-preview.latex-mode h2,
+.md-preview.latex-mode h3,
+.md-preview.latex-mode h4 {
+  font-family: inherit;
+  font-weight: 700;
+  color: #000;
+  line-height: 1.1;
+  margin: 0;
+}
+.md-preview.latex-mode h2 {
+  font-size: 1.12em; /* \large */
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-top: 0.8ex;
+  margin-bottom: 0.4ex;
+  padding-bottom: 1px;
+  border-bottom: 0.4pt solid currentColor; /* \titlerule */
+}
+.md-preview.latex-mode h1 {
+  font-size: 1.9em;
+  text-align: center;
+  margin-bottom: 0.2em;
+  line-height: 1;
+}
+.md-preview.latex-mode h3 {
+  font-size: 1.02em;
+  margin-top: 0.6ex;
+  margin-bottom: 0.3ex;
+}
+
+/* Body paragraphs — dense LaTeX-style leading. */
+.md-preview.latex-mode p {
+  margin: 0 0 0.35em 0;
+  line-height: 1.22;
+}
+
+/* Lists — \setlist[itemize]{leftmargin=*, itemsep=2.2pt, parsep=0pt, topsep=2pt} */
+.md-preview.latex-mode ul,
+.md-preview.latex-mode ol {
+  padding-left: 1.4em;
+  margin-top: 1px;
+  margin-bottom: 1px;
+}
+.md-preview.latex-mode ul > li,
+.md-preview.latex-mode ol > li {
+  margin: 0 0 2.2pt 0;
+  padding: 0;
+  line-height: 1.22;
+}
+.md-preview.latex-mode li > p {
+  margin: 0;
+}
+
+/* Links — \hypersetup{urlcolor=blue} → blue, no underline unless hovered */
+.md-preview.latex-mode a {
+  color: #0000ee;
+  text-decoration: none;
+}
+.md-preview.latex-mode a:hover {
+  text-decoration: underline;
+}
+
+/* Alignment environments produced by texToMarkdown. */
+.md-preview.latex-mode .tex-center {
+  text-align: center;
+}
+.md-preview.latex-mode .tex-flushleft {
+  text-align: left;
+}
+.md-preview.latex-mode .tex-flushright {
+  text-align: right;
+}
+/* Inside a centered header, paragraphs shouldn't add a bottom gap — the
+   explicit `\\[Xem]` spacers already handle vertical rhythm. */
+.md-preview.latex-mode .tex-center > p {
+  margin: 0;
+}
+
+/* `\hfill` — two (or more) content fragments pushed to opposite
+   margins. Matches LaTeX's horizontal-glue semantics: left segment
+   sticks to left edge, right segment sticks to right edge, extras get
+   evenly distributed by flexbox. */
+.md-preview.latex-mode .tex-hfill {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  gap: 1em;
+}
+.md-preview.latex-mode .tex-hfill > span:first-child {
+  text-align: left;
+}
+.md-preview.latex-mode .tex-hfill > span:last-child {
+  text-align: right;
+}
+
+/* `\hfill` layout applied by `LatexPreview.applyHfillLayout`. Every
+   line inside a block that contains the sentinel gets wrapped in a
+   `.tex-hfill-row` span, and each sentinel becomes a flex-growing
+   `.tex-hfill-glue` spacer — exactly like TeX's `\hfill` rubber
+   length. Text fragments on either side stay at natural width, never
+   shrink, and never internally justify. Neighbouring lines (without
+   `\hfill`) inside the same block are left alone so mixed layouts
+   still work. */
+.md-preview.latex-mode .tex-hfill-row {
+  display: flex;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  text-align-last: left;
+}
+.md-preview.latex-mode .tex-hfill-row > .tex-hfill-cell {
+  flex: 0 0 auto;
+  text-align: left;
+}
+.md-preview.latex-mode .tex-hfill-row > .tex-hfill-cell:last-child {
+  text-align: right;
+}
+.md-preview.latex-mode .tex-hfill-row > .tex-hfill-glue {
+  flex: 1 1 0;
+  min-width: 1em;
+  align-self: stretch;
+}
+
+/* latex.js's article.css defaults are tuned for full pages, not
+   résumés — h2 with `margin-top: 3.5ex` doubles what Overleaf's
+   `\titlespacing` produces. Tighten the sectioning spacing to match
+   the source document's `\titlespacing{\section}{0pt}{1.3ex}{0.9ex}`
+   directive and drop back to a single-page layout. */
+.md-preview.latex-mode h2 {
+  margin-top: var(--doc-h2-margin-top, 0.6ex);
+  margin-bottom: var(--doc-h2-margin-bottom, 0.4ex);
+  font-size: var(--doc-h2-font-size, 1.12em);
+}
+.md-preview.latex-mode h3 {
+  margin-top: 0.5ex;
+  margin-bottom: 0.25ex;
+}
+/* Big `\Huge \textbf{PARTH PATIL}` blocks come out as a `.Huge`-class
+   span from latex.js. Rein them in a bit so the header doesn't eat
+   half the page. */
+.md-preview.latex-mode .Huge {
+  font-size: var(--doc-huge-font-size, 1.9em);
+  line-height: 1;
+}
+/* The `\begin{center}` header block is a `.centering` div. Kill its
+   default margin so the header sits at the top edge and doesn't push
+   the first section down the page. */
+.md-preview.latex-mode .centering {
+  margin-top: 0;
+  margin-bottom: 0.2em;
+}
+
+/* latex.js uses CSS custom properties for list/paragraph rhythm.
+   Their defaults are print-generous — Overleaf's résumé source uses
+   `\setlist[itemize]{leftmargin=*, itemsep=2.2pt, parsep=0pt,
+   topsep=2pt}` which we strip. Replicate that behaviour in CSS:
+   bullets flush with the paragraph left edge (marker hangs in the
+   1em area) and near-zero spacing between items. Scoped so longer
+   documents rendered elsewhere still get the engine defaults. */
+.md-preview.latex-mode .list {
+  --topsep: 0;
+  --parsep: 0;
+  --itemsep: var(--doc-list-item-spacing, 0.12rem);
+  /* `leftmargin=*` in enumitem → 0 indent for the list container;
+     the bullet marker itself is placed at the padding-left position
+     so text still has a small hanging indent. */
+  --leftmargini: var(--doc-list-indent, 1em);
+  --leftmarginii: var(--doc-list-indent, 1em);
+  --leftmargin: var(--doc-list-indent, 1em);
+  margin-top: 0.1rem;
+  margin-bottom: 0.1rem;
+}
+.md-preview.latex-mode .list .list {
+  --leftmargin: var(--doc-list-indent, 1em);
+  margin-top: 0.05rem;
+  margin-bottom: 0.05rem;
+}
+.md-preview.latex-mode .list p {
+  margin-top: 0;
+  margin-bottom: 0.1em;
+}
+.md-preview.latex-mode {
+  --parskip: 0.1rem;
+  --smallskipamount: 0.1rem;
+  --medskipamount: 0.2rem;
+  --bigskipamount: 0.4rem;
+}
+.md-preview.latex-mode p {
+  margin-top: 0;
+  margin-bottom: var(--doc-paragraph-spacing, 0.25em);
+}
+
+/* `\\[Xem]` and `\vspace{Xem}` — invisible block-level spacers whose
+   height/margin controls the extra gap. `aria-hidden` keeps them out
+   of screen readers. */
+.md-preview.latex-mode .tex-vspacer {
+  display: block;
+  width: 100%;
+  line-height: 0;
+  font-size: 0;
+}
+
+/* Horizontal rule — LaTeX's default `\hrule` / `\rule` produces a thin
+   full-width black line. Match. */
+.md-preview.latex-mode hr {
+  border: none;
+  border-top: 0.4pt solid currentColor;
+  margin: 0.8em 0;
+}
+
+/* Inline code / \texttt — keep monospace but drop the pill background
+   Tailwind Typography adds; LaTeX renders it as plain typewriter text. */
+.md-preview.latex-mode code {
+  font-family: 'Latin Modern Mono', 'CMU Typewriter Text', 'Courier New',
+    monospace;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: 0.95em;
+}
+
+/* PDF paper stays white regardless of shell theme. Overleaf does this
+   too — the compiled preview always shows on white paper even when the
+   surrounding UI is dark. Keeping the paper white also avoids the
+   "dark contact-card" look the header was accidentally getting. */
+html.dark .md-preview.latex-mode {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}
+html.dark .md-preview.latex-mode h1,
+html.dark .md-preview.latex-mode h2,
+html.dark .md-preview.latex-mode h3,
+html.dark .md-preview.latex-mode h4 {
+  color: #000000;
+}
+html.dark .md-preview.latex-mode a {
+  color: #0000ee;
+}
+
+

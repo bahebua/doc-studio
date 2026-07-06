@@ -1,0 +1,36 @@
+node_modules
+dist
+dist-single
+dist-ssr
+.vite
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# TypeScript incremental build output
+*.tsbuildinfo
+
+# tsc-emitted output at repo root (vite.config.ts is authored in TS)
+/vite.config.js
+/vite.config.d.ts
+
+# tsc-emitted output next to authored .ts sources
+server/*.js
+server/*.d.ts
+vite-plugins/*.js
+vite-plugins/*.d.ts
+
+# Bundle visualiser artefact
+stats.html
+
+# Tauri build output
+src-tauri/target/
+
+# Capacitor generated native projects (recreated via `npx cap sync`)
+/android/
+/ios/

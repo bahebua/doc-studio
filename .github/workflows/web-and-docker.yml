@@ -1,0 +1,100 @@
+# Doc Studio — CI: web build + Docker image push.
+#
+# Runs on every push / PR to `main`. On push to `main` it also builds and
+# publishes a multi-arch Docker image to GitHub Container Registry (GHCR).
+# The static PWA bundle (`dist/`) is uploaded as a workflow artifact so
+# you can grab it from the Actions tab and drop it on any web host.
+#
+# No secrets required beyond the auto-provisioned GITHUB_TOKEN.
+
+name: web-and-docker
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build web bundle
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build (PWA + PNG icons via prebuild)
+        run: npm run build
+
+      - name: Read package version
+        id: meta
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-studio-web-${{ steps.meta.outputs.version }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+  docker:
+    name: Build & push Docker image
+    needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          IMAGE=ghcr.io/${{ github.repository }}
+          # Lower-case the owner/name for GHCR compatibility.
+          IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.tags.outputs.image }}:latest
+            ${{ steps.tags.outputs.image }}:${{ needs.build.outputs.version }}
+            ${{ steps.tags.outputs.image }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

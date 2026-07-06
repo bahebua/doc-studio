@@ -1,0 +1,13 @@
+# Docker build context excludes
+node_modules
+dist
+dist-single
+build.log
+.git
+.github
+.vscode
+.idea
+android
+ios
+src-tauri/target
+**/*.log

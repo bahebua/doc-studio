@@ -1,0 +1,102 @@
+# Doc Studio — CI: Tauri desktop bundles for Windows / macOS / Linux.
+#
+# Fans out across three runners in parallel and uploads each installer
+# as a workflow artifact. On tag push (`v*.*.*`) it also drafts a
+# GitHub Release with all bundles attached.
+#
+# No secrets required for unsigned builds. To ship notarized macOS
+# `.dmg`s, add APPLE_CERTIFICATE, APPLE_ID and related secrets — see
+# https://tauri.app/v2/distribute/sign/macos for the full list. Windows
+# code-signing is analogous with WINDOWS_CERTIFICATE.
+
+name: tauri-desktop
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: tauri-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write  # needed for the release step below
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: ''
+            label: 'windows-x64'
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+            label: 'macos-universal'
+          - platform: 'ubuntu-22.04'
+            args: ''
+            label: 'linux-x64'
+
+    runs-on: ${{ matrix.platform }}
+    name: Build (${{ matrix.label }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Universal binary needs both targets on macOS.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Cache Cargo registry + build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Linux packaging deps
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
+            librsvg2-dev patchelf libssl-dev
+
+      - name: Install npm deps
+        run: npm ci
+
+      - name: Build web + native shell
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: 'Doc Studio ${{ github.ref_name }}'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+      - name: Upload bundles as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-studio-${{ matrix.label }}
+          path: |
+            src-tauri/target/release/bundle/**/*
+            src-tauri/target/*/release/bundle/**/*
+          if-no-files-found: warn
+          retention-days: 30

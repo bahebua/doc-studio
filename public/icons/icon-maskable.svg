@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Maskable icon: content sits inside the safe zone (~40% padding). -->
+  <rect width="512" height="512" fill="#2338a8"/>
+  <g transform="translate(128 128) scale(0.5)">
+    <path fill="#ffffff" d="M136 96h176l64 64v256a24 24 0 0 1-24 24H136a24 24 0 0 1-24-24V120a24 24 0 0 1 24-24z"/>
+    <path fill="#a5b4d4" d="M312 96v40a24 24 0 0 0 24 24h40z"/>
+    <path fill="#facc15" stroke="#0f172a" stroke-width="12" stroke-linejoin="round" d="M280 200l-88 128h56l-24 88 96-136h-64z"/>
+  </g>
+</svg>

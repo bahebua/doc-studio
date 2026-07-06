@@ -1,0 +1,27 @@
+# Docker Compose for Doc Studio.
+#
+# Quick start:
+#   docker compose up -d --build
+#   open http://localhost:8080
+#
+# Behind nginx/traefik: expose port 8080 internally, set TRUST_PROXY=1.
+
+services:
+  doc-studio:
+    build: .
+    image: doc-studio:latest
+    container_name: doc-studio
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      # Allow the built-in proxy to reach private/LAN targets. Turn this
+      # off in a public deployment.
+      PROXY_ALLOW_PRIVATE: "1"
+      TRUST_PROXY: "0"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 3s
+      retries: 3

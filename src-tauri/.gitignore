@@ -1,0 +1,9 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Generated icons (created by `tauri icon` — check them in for release)
+!icons/.gitkeep
+
+# Local platform config
+gen/

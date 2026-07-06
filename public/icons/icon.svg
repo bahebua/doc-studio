@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5e83ff"/>
+      <stop offset="1" stop-color="#2338a8"/>
+    </linearGradient>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Document page with folded corner -->
+  <path fill="url(#page)" d="M136 96h176l64 64v256a24 24 0 0 1-24 24H136a24 24 0 0 1-24-24V120a24 24 0 0 1 24-24z"/>
+  <path fill="#c5d0e0" d="M312 96v40a24 24 0 0 0 24 24h40z"/>
+  <!-- Lightning bolt overlay -->
+  <path fill="#facc15" stroke="#0f172a" stroke-width="8" stroke-linejoin="round" d="M280 200l-88 128h56l-24 88 96-136h-64z"/>
+</svg>
