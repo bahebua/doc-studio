@@ -78,7 +78,7 @@ jobs:
             librsvg2-dev patchelf libssl-dev
 
       - name: Install npm deps
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build web + native shell
         uses: tauri-apps/tauri-action@v0

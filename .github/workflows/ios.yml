@@ -39,7 +39,7 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer || true
 
       - name: Install npm deps
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build web bundle
         run: npm run build
