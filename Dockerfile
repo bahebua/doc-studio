@@ -17,11 +17,13 @@
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
-# Copy manifests first for better layer caching. Use `npm install` (not
-# `npm ci`) so the build tolerates transitive optional-dep drift between
-# platforms — the lockfile is regenerated on Windows and doesn't always
-# carry every Linux-scoped optional entry.
+# Copy manifests + postinstall script first for better layer caching. Use
+# `npm install` (not `npm ci`) so the build tolerates transitive optional-dep
+# drift between platforms — the lockfile is regenerated on Windows and
+# doesn't always carry every Linux-scoped optional entry. `scripts/` must be
+# present because `postinstall` runs `node scripts/patch-latexjs.mjs`.
 COPY package.json package-lock.json ./
+COPY scripts ./scripts
 RUN npm install --no-audit --no-fund
 
 # Now the rest of the source. `.dockerignore` keeps node_modules /

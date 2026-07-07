@@ -55,35 +55,45 @@ jobs:
           ls -la ios/
           ls -la ios/App/ || true
 
-      - name: CocoaPods install
+      - name: CocoaPods install (only if a Podfile exists)
         run: |
           set -euxo pipefail
           PODFILE_PATH=$(find ios -maxdepth 5 -name Podfile -print -quit || true)
-          if [ -z "$PODFILE_PATH" ] || [ ! -f "$PODFILE_PATH" ]; then
-            echo '--- No Podfile found under ios/. Dumping tree for diagnosis: ---'
-            find ios -maxdepth 4 -type f | head -200
-            exit 1
+          if [ -n "$PODFILE_PATH" ] && [ -f "$PODFILE_PATH" ]; then
+            PODFILE_DIR=$(dirname "$PODFILE_PATH")
+            echo "Running pod install in $PODFILE_DIR"
+            cd "$PODFILE_DIR"
+            pod install --repo-update
+          else
+            echo 'No Podfile — Capacitor 8 uses Swift Package Manager, skipping CocoaPods.'
           fi
-          PODFILE_DIR=$(dirname "$PODFILE_PATH")
-          echo "Running pod install in $PODFILE_DIR"
-          cd "$PODFILE_DIR"
-          pod install --repo-update
 
       - name: Build unsigned .app
         run: |
           set -euxo pipefail
+          # Prefer .xcworkspace (CocoaPods layout); fall back to .xcodeproj (SPM layout in Capacitor 8+).
           WORKSPACE_PATH=$(find ios -maxdepth 5 -name '*.xcworkspace' -print -quit || true)
-          if [ -z "$WORKSPACE_PATH" ]; then
-            echo 'No .xcworkspace found under ios/'
-            find ios -maxdepth 4 -type d | head -50
-            exit 1
+          if [ -n "$WORKSPACE_PATH" ]; then
+            CONTAINER_FLAG="-workspace"
+            CONTAINER_PATH="$WORKSPACE_PATH"
+            CONTAINER_NAME=$(basename "$WORKSPACE_PATH")
+            SCHEME=$(basename "$CONTAINER_NAME" .xcworkspace)
+          else
+            PROJECT_PATH=$(find ios -maxdepth 5 -name '*.xcodeproj' -print -quit || true)
+            if [ -z "$PROJECT_PATH" ]; then
+              echo 'No .xcworkspace or .xcodeproj found under ios/'
+              find ios -maxdepth 4 -type d | head -60
+              exit 1
+            fi
+            CONTAINER_FLAG="-project"
+            CONTAINER_PATH="$PROJECT_PATH"
+            CONTAINER_NAME=$(basename "$PROJECT_PATH")
+            SCHEME=$(basename "$CONTAINER_NAME" .xcodeproj)
           fi
-          WORKSPACE_DIR=$(dirname "$WORKSPACE_PATH")
-          WORKSPACE_NAME=$(basename "$WORKSPACE_PATH")
-          SCHEME=$(basename "$WORKSPACE_NAME" .xcworkspace)
-          echo "xcodebuild in $WORKSPACE_DIR (workspace=$WORKSPACE_NAME, scheme=$SCHEME)"
-          cd "$WORKSPACE_DIR"
-          xcodebuild -workspace "$WORKSPACE_NAME" \
+          CONTAINER_DIR=$(dirname "$CONTAINER_PATH")
+          echo "xcodebuild in $CONTAINER_DIR ($CONTAINER_FLAG=$CONTAINER_NAME, scheme=$SCHEME)"
+          cd "$CONTAINER_DIR"
+          xcodebuild "$CONTAINER_FLAG" "$CONTAINER_NAME" \
             -scheme "$SCHEME" \
             -configuration Debug \
             -sdk iphonesimulator \
