@@ -18,11 +18,10 @@
 name: android
 
 on:
+  # Native Android builds are expensive. Only run on tag pushes (release
+  # cuts) or when explicitly triggered.
   push:
-    branches: [main]
     tags: ['v*.*.*']
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:

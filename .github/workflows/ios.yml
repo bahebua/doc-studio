@@ -8,11 +8,10 @@
 name: ios
 
 on:
+  # Native iOS builds burn expensive macOS runner minutes. Only run
+  # on tag pushes (release cuts) or when explicitly triggered.
   push:
-    branches: [main]
     tags: ['v*.*.*']
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -25,7 +24,8 @@ permissions:
 jobs:
   build:
     name: Build unsigned .app
-    runs-on: macos-14
+    # macos-15 ships Xcode 16 by default, which Capacitor 8 requires.
+    runs-on: macos-15
 
     steps:
       - uses: actions/checkout@v4
@@ -34,9 +34,6 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer || true
 
       - name: Install npm deps
         run: npm install --no-audit --no-fund

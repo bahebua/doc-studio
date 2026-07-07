@@ -12,11 +12,10 @@
 name: tauri-desktop
 
 on:
+  # Desktop bundles fan out to 3 platforms. Only run on tag pushes
+  # (release cuts) or when explicitly triggered.
   push:
-    branches: [main]
     tags: ['v*.*.*']
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
