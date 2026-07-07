@@ -46,11 +46,14 @@ jobs:
 
       - name: Bootstrap iOS project (first run only)
         run: |
+          set -euxo pipefail
           if [ ! -d "ios" ]; then
             npx cap add ios
-          else
-            npx cap sync ios
           fi
+          npx cap sync ios
+          echo '--- ios tree ---'
+          ls -la ios/
+          ls -la ios/App/ || true
 
       - name: CocoaPods install
         working-directory: ios/App
