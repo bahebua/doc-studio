@@ -14,12 +14,15 @@
 # Compose: docker compose up -d
 
 # ---------- Stage 1: build ----------
-FROM node:20-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
-# Copy manifests first for better layer caching. `npm ci` is deterministic.
+# Copy manifests first for better layer caching. Use `npm install` (not
+# `npm ci`) so the build tolerates transitive optional-dep drift between
+# platforms — the lockfile is regenerated on Windows and doesn't always
+# carry every Linux-scoped optional entry.
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 
 # Now the rest of the source. `.dockerignore` keeps node_modules /
 # dist / build.log out of context.
@@ -28,7 +31,7 @@ COPY . .
 RUN npm run build
 
 # ---------- Stage 2: runtime ----------
-FROM node:20-bookworm-slim AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \

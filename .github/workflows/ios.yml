@@ -56,14 +56,35 @@ jobs:
           ls -la ios/App/ || true
 
       - name: CocoaPods install
-        working-directory: ios/App
-        run: pod install --repo-update
+        run: |
+          set -euxo pipefail
+          PODFILE_PATH=$(find ios -maxdepth 5 -name Podfile -print -quit || true)
+          if [ -z "$PODFILE_PATH" ] || [ ! -f "$PODFILE_PATH" ]; then
+            echo '--- No Podfile found under ios/. Dumping tree for diagnosis: ---'
+            find ios -maxdepth 4 -type f | head -200
+            exit 1
+          fi
+          PODFILE_DIR=$(dirname "$PODFILE_PATH")
+          echo "Running pod install in $PODFILE_DIR"
+          cd "$PODFILE_DIR"
+          pod install --repo-update
 
       - name: Build unsigned .app
-        working-directory: ios/App
         run: |
-          xcodebuild -workspace App.xcworkspace \
-            -scheme App \
+          set -euxo pipefail
+          WORKSPACE_PATH=$(find ios -maxdepth 5 -name '*.xcworkspace' -print -quit || true)
+          if [ -z "$WORKSPACE_PATH" ]; then
+            echo 'No .xcworkspace found under ios/'
+            find ios -maxdepth 4 -type d | head -50
+            exit 1
+          fi
+          WORKSPACE_DIR=$(dirname "$WORKSPACE_PATH")
+          WORKSPACE_NAME=$(basename "$WORKSPACE_PATH")
+          SCHEME=$(basename "$WORKSPACE_NAME" .xcworkspace)
+          echo "xcodebuild in $WORKSPACE_DIR (workspace=$WORKSPACE_NAME, scheme=$SCHEME)"
+          cd "$WORKSPACE_DIR"
+          xcodebuild -workspace "$WORKSPACE_NAME" \
+            -scheme "$SCHEME" \
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
