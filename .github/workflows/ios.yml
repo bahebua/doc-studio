@@ -71,15 +71,17 @@ jobs:
       - name: Build unsigned .app
         run: |
           set -euxo pipefail
-          # Prefer .xcworkspace (CocoaPods layout); fall back to .xcodeproj (SPM layout in Capacitor 8+).
-          WORKSPACE_PATH=$(find ios -maxdepth 5 -name '*.xcworkspace' -print -quit || true)
+          # Prefer a top-level .xcworkspace (CocoaPods layout), but exclude
+          # the auto-generated `project.xcworkspace` bundle nested inside
+          # every .xcodeproj — that one has scheme "project", not "App".
+          WORKSPACE_PATH=$(find ios -maxdepth 3 -name '*.xcworkspace' -not -path '*.xcodeproj/*' -print -quit || true)
           if [ -n "$WORKSPACE_PATH" ]; then
             CONTAINER_FLAG="-workspace"
             CONTAINER_PATH="$WORKSPACE_PATH"
             CONTAINER_NAME=$(basename "$WORKSPACE_PATH")
             SCHEME=$(basename "$CONTAINER_NAME" .xcworkspace)
           else
-            PROJECT_PATH=$(find ios -maxdepth 5 -name '*.xcodeproj' -print -quit || true)
+            PROJECT_PATH=$(find ios -maxdepth 3 -name '*.xcodeproj' -print -quit || true)
             if [ -z "$PROJECT_PATH" ]; then
               echo 'No .xcworkspace or .xcodeproj found under ios/'
               find ios -maxdepth 4 -type d | head -60
@@ -93,6 +95,8 @@ jobs:
           CONTAINER_DIR=$(dirname "$CONTAINER_PATH")
           echo "xcodebuild in $CONTAINER_DIR ($CONTAINER_FLAG=$CONTAINER_NAME, scheme=$SCHEME)"
           cd "$CONTAINER_DIR"
+          # List schemes for diagnosis if the build later fails.
+          xcodebuild "$CONTAINER_FLAG" "$CONTAINER_NAME" -list || true
           xcodebuild "$CONTAINER_FLAG" "$CONTAINER_NAME" \
             -scheme "$SCHEME" \
             -configuration Debug \
